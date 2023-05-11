@@ -2,8 +2,8 @@
 
 // ** Recuperar los productos  local storage
 //** si hay  productos en local Storage carga el carrito con esos productos, sino crea el carrito vacio
-
-let carrito;
+let haceCompra
+let carrito = 0;
 if(localStorage.getItem("carrito")) {
   carrito = JSON.parse(localStorage.getItem("carrito"));
 } else {
@@ -188,14 +188,17 @@ const montoTotalCarrito = ()=>{
     let totalAPagar = carrito.reduce((acumulador, {precio, cantidadTotalProductos})=>{
         return acumulador + (precio*cantidadTotalProductos)
     }, 0)
-
+    if (totalAPagar > 0) {
+        haceCompra = 1
+    }
     carritoTotal.innerHTML=`<strong style="font-size: 22px; color: blue;">Total a Pagar: $ ${totalAPagar}`
+   
     
 }
 //** actualiza la visualización del carrito de compras */
 
 function MuestraInicialzaCarrito() {
-           
+      
         const productosCarrito = document.getElementById("listaCarrito");
         
         productosCarrito.innerHTML = "";
@@ -207,7 +210,7 @@ function MuestraInicialzaCarrito() {
         carrito.forEach(({ nombre, id, precio, cantidadTotalProductos }) => {
            
             let productosElegidos = document.createElement("li");
-            productosElegidos.innerHTML = `<strong style="font-size: 20px; color: green;"> ${nombre} <br> <strong style="font-size: 15px; color: black">Precio de c/${nombre}: $${precio}<br> Cantidad: ${cantidadTotalProductos} <button id="eliminarCarrito${id}"><i class="bi bi-trash-fill"></i></button>`;
+            productosElegidos.innerHTML = `<strong style="font-size: 20px; color: green;"> ${nombre} <br> <strong style="font-size: 15px; color: black">Precio de c/${nombre}: $${precio}<br> Cantidad: ${cantidadTotalProductos} <button id="eliminarCarrito${id}" ><i class="bi bi-caret-down-square"></i></button> <button id="sacarCarrito${id}"><i class="bi bi-trash-fill"></i></button>`
             productosCarrito.appendChild(productosElegidos);
 
         const botonBorrar = document.getElementById(`eliminarCarrito${id}`);
@@ -215,7 +218,7 @@ function MuestraInicialzaCarrito() {
             botonBorrar.addEventListener("click", () => {
                  
                 if (cantidadTotalProductos > 1) {
-                   // si hay mas de 1 procducto en el carrito actualizamos la cantida
+                   // si hay mas de 1 producto en el carrito actualizamos la cantidad
                     carrito = carrito.map((elemento) => {
                         if (elemento.id === id) {
                             cantidadTotalProductos--
@@ -226,6 +229,7 @@ function MuestraInicialzaCarrito() {
                 } else {
                     // si la cantidad de productos es 1, eliminamos el elemento del carrito                    
                     carrito = carrito.filter((elemento) => elemento.id !== id);
+                    haceCompra=0
                 }
 
    //***se guarda en el localStorage  
@@ -236,6 +240,28 @@ function MuestraInicialzaCarrito() {
     //** Actualizar la pantalla con el nuevo contenido del carrito. */
                 MuestraInicialzaCarrito();
             });
+            
+
+//********saca todos los productos de este tipo del carrito*********** */
+
+        const sacarCarrito = document.getElementById(`sacarCarrito${id}`);
+       
+            sacarCarrito.addEventListener("click", () => {
+                 
+                    // si la cantidad de productos es 1, eliminamos el elemento del carrito                    
+                    carrito = carrito.filter((elemento) => elemento.id !== id)
+                    haceCompra=0;
+                
+
+   //***se guarda en el localStorage  
+
+                let carritoString = JSON.stringify(carrito);
+                localStorage.setItem("carrito", carritoString);
+
+    //** Actualizar la pantalla con el nuevo contenido del carrito. */
+                MuestraInicialzaCarrito();
+            });
+
         });
     };
 
@@ -243,7 +269,9 @@ function MuestraInicialzaCarrito() {
 
     const finCompra = document.getElementById("botonCompraFinal")
     finCompra.addEventListener("click", ()=>{
-        confirmarPedido()})
+        confirmarPedido()
+       
+    })
 
  
     const confirmarPedido = ()=>{
@@ -254,5 +282,66 @@ function MuestraInicialzaCarrito() {
         MuestraInicialzaCarrito()
         let mensaje = document.getElementById("carritoTotal")
         mensaje.innerHTML = " "
-      
+        agradeceCompra()
+      } 
+
+    //** Alert mostrando como son las politicas de cambio */
+
+    const politicaCambio = document.getElementById("botonPolitica");
+
+    politicaCambio.addEventListener ("click", ()=>{
+        Swal.fire ({
+            title: "El cambio se podrá realizar dentro de los 10 (Diez) días corridos posteriores de recibido el producto",
+            icon: "info",
+            confirmButtonText: "Aceptar",
+            background: "#58D68D",
+            iconColor: "#FF8D33",
+                                 
+            })
+    })
+
+    //** Alert AGRADECIENDO LA COMPRA */
+
+    const agradeceCompra = ()=>{ 
+    if (haceCompra === 1) {
+        Swal.fire ({
+            title: "GRACIAS POR SU COMPRA",
+            icon: "success",
+            confirmButtonText: "Aceptar",
+            background: "#D7DBDD",
+            iconColor: "#2ECC71",
+                         
+         })
+         haceCompra = 0 
+     }
+        
+    }
+
+
+    //**  muestar cotizacion dolar usando FECH */
+
+    const valorDolar = document.getElementById("botonPolitica");
+
+    politicaCambio.addEventListener ("click", ()=>{
+    }) 
+    const BotonDolar = document.getElementById("botonDolar")
+    BotonDolar.addEventListener("click", ()=>{
+        cotizarDolar()})
+
+    const cotizarDolar = ()=>{
+    const criptoYa = "https://criptoya.com/api/dolar";
+    const divDolar = document.getElementById("valorDolar");
+
+    setInterval(() => {
+         fetch(criptoYa)
+        .then (response => response.json ())
+        .then(({oficial, blue})=>{
+        divDolar.innerHTML= `
+        <p style="color: white; font-weight: bold";>Dólar Oficial: ${oficial}</p>
+        <p style="color: white; font-weight: bold";>Dólar Blue: ${blue}</p>`
+        
+    })
+    .catch(error => console.error ("hubo un error"))
+    
+    }, 2000);
     } 
